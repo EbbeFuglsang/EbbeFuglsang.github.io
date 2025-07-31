@@ -2,12 +2,11 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>API Documentation</title>
+  <title>Dynamic Target Swagger UI</title>
   <link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist/swagger-ui.css" />
   <style>
     html {
       box-sizing: border-box;
-      overflow: -moz-scrollbars-vertical;
       overflow-y: scroll;
     }
     *, *:before, *:after {
@@ -17,16 +16,38 @@
       margin: 0;
       background: #fafafa;
     }
+    #target-form {
+      padding: 10px;
+      background: #eee;
+      border-bottom: 1px solid #ccc;
+    }
+    #target-form input {
+      margin-right: 10px;
+    }
   </style>
 </head>
 <body>
+  <div id="target-form">
+    <label>Target IP: <input type="text" id="ip" placeholder="127.0.0.1"></label>
+    <label>Port: <input type="text" id="port" placeholder="8080"></label>
+    <button onclick="updateTarget()">Set Target</button>
+  </div>
   <div id="swagger-ui"></div>
 
   <script src="https://unpkg.com/swagger-ui-dist/swagger-ui-bundle.js"></script>
   <script src="https://unpkg.com/swagger-ui-dist/swagger-ui-standalone-preset.js"></script>
   <script>
-    window.onload = () => {
-      const ui = SwaggerUIBundle({
+    let targetHost = "";
+
+    function updateTarget() {
+      const ip = document.getElementById('ip').value;
+      const port = document.getElementById('port').value;
+      targetHost = `http://${ip}:${port}`;
+      initSwaggerUI();
+    }
+
+    function initSwaggerUI() {
+      SwaggerUIBundle({
         url: "swagger.yaml",
         dom_id: '#swagger-ui',
         deepLinking: true,
@@ -34,9 +55,17 @@
           SwaggerUIBundle.presets.apis,
           SwaggerUIStandalonePreset
         ],
-        layout: "StandaloneLayout"
+        layout: "StandaloneLayout",
+        requestInterceptor: (req) => {
+          const url = new URL(req.url, window.location.origin);
+          req.url = targetHost + url.pathname;
+          return req;
+        }
       });
-      window.ui = ui;
+    }
+
+    window.onload = () => {
+      initSwaggerUI();
     };
   </script>
 </body>
